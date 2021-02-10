@@ -2,4 +2,4 @@
 
 Estudiante de Ingeniería en Ciencias y Sistemas
 
-<img src="foto.png" width="200">.
+<img src="foto.png" width="200">
