@@ -1,0 +1,5 @@
+.gradient {
+  background: linear-gradient(120deg, var(--bs-blue), var(--bs-gray-900));
+  color: #fff;
+}
+
