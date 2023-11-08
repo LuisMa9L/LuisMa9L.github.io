@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DPI-TEXTRACT</title>
+    
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        h1 {
+            color: #007bff;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        textarea, input[type="file"], button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f5f5f5;
+            text-align: left;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>DPI-TEXTRACT (DEME)</H1>
+    <h2>Luis Manuel Morales</H2>
+    <label for="pass">Password:</label>
+    <textarea id="pass" placeholder="Pass"></textarea>
+    
+    <label for="frontImage">Front Image:</label>
+    <input type="file" id="frontImage" accept="image/*">
+    
+    <label for="backImage">Back Image:</label>
+    <input type="file" id="backImage" accept="image/*">
+    
+    <button id="sendButton">Enviar</button>
+    
+    <!-- Tabla para mostrar el resultado -->
+    <table id="result">
+        <thead>
+            <tr>
+                <th>Key</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        document.getElementById("sendButton").addEventListener("click", function() {
+            const pass = document.getElementById("pass").value;
+            const frontImageInput = document.getElementById("frontImage");
+            const backImageInput = document.getElementById("backImage");
+            
+            const frontImage = frontImageInput.files[0];
+            const backImage = backImageInput.files[0];
+
+            // Convertir las imágenes en Base64
+            const convertToBase64 = (file) => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        resolve(reader.result.split(',')[1]);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            };
+
+            Promise.all([convertToBase64(frontImage), convertToBase64(backImage)])
+            .then(([frontBase64, backBase64]) => {
+                const dataToSend = {
+                    pass,
+                    front: frontBase64,
+                    back: backBase64
+                };
+
+                // URL de tu API Gateway en AWS Lambda
+                const apiUrl = "https://efstold5y7.execute-api.us-east-1.amazonaws.com/default/lamda_fun_dpi";
+
+                // Realizar una solicitud POST a la URL de la API
+                fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json', // Tipo de contenido JSON
+                    },
+                    body: JSON.stringify(dataToSend), // Convierte los datos a JSON
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json(); // Procesar la respuesta JSON si es exitosa
+                    } else {
+                        throw new Error('Error en la solicitud');
+                    }
+                })
+                .then(data => {
+                    da1 = data
+                    // Mostrar el resultado en la tabla
+                    data4=data.body
+                    //data2  = JSON.parse(da);
+                    datan = JSON.parse(JSON.parse(data4));
+                    data4 =datan
+                    const resultTable = document.getElementById("result").getElementsByTagName('tbody')[0];
+                    resultTable.innerHTML = ''; // Limpiar contenido anterior
+
+                    for (const key in data4) {
+                        if (data4.hasOwnProperty(key)) {
+                            const row = resultTable.insertRow();
+                            const cellKey = row.insertCell(0);
+                            const cellValue = row.insertCell(1);
+                            cellKey.textContent = key;
+                            cellValue.textContent = data4[key];
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            })
+            .catch(error => {
+                console.error('Error al convertir imágenes:', error);
+            });
+        });
+    </script>
+</body>
+</html>
